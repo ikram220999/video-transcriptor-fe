@@ -1,65 +1,197 @@
-import Image from "next/image";
+"use client";
+
+import { useState, useRef, DragEvent, ChangeEvent, FormEvent } from "react";
+
+type StatusType = "idle" | "loading" | "success" | "error";
+
+interface UploadResult {
+  message?: string;
+  jobId?: string;
+  story?: string;
+  error?: string;
+  summary?: {
+    scenesDetected?: number;
+    keyframesExtracted?: number;
+  };
+}
 
 export default function Home() {
+  const [file, setFile] = useState<File | null>(null);
+  const [personas, setPersonas] = useState("");
+  const [isDragOver, setIsDragOver] = useState(false);
+  const [status, setStatus] = useState<StatusType>("idle");
+  const [result, setResult] = useState<UploadResult | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleDragOver = (e: DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setIsDragOver(true);
+  };
+
+  const handleDragLeave = () => {
+    setIsDragOver(false);
+  };
+
+  const handleDrop = (e: DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setIsDragOver(false);
+    const files = e.dataTransfer.files;
+    if (files.length > 0 && files[0].type.startsWith("video/")) {
+      setFile(files[0]);
+    }
+  };
+
+  const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      setFile(e.target.files[0]);
+    }
+  };
+
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (!file) return;
+
+    setIsSubmitting(true);
+    setStatus("loading");
+    setResult(null);
+
+    const formData = new FormData();
+    formData.append("video", file);
+    formData.append("personas", personas);
+
+    try {
+      const response = await fetch("/api/upload", {
+        method: "POST",
+        body: formData,
+      });
+
+      const data: UploadResult = await response.json();
+
+      if (response.ok) {
+        setStatus("success");
+        setResult(data);
+      } else {
+        throw new Error(data.error || "Upload failed");
+      }
+    } catch (error) {
+      setStatus("error");
+      setResult({
+        error: error instanceof Error ? error.message : "An error occurred",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
+    <main className="min-h-screen flex items-center justify-center p-6">
+      <div className="w-full max-w-md">
+        {/* Header */}
+        <div className="text-center mb-8">
+          <h1 className="text-2xl font-semibold text-white mb-1">
+            Video Story Generator
           </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+          <p className="text-sm text-[#737373]">
+            Upload a video to generate AI stories
           </p>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+
+        {/* Card */}
+        <div className="bg-[#141414] border border-[#2a2a2a] rounded-2xl p-8 shadow-lg">
+          <form onSubmit={handleSubmit}>
+            {/* Upload */}
+            <div className="mb-6">
+              <label className="block text-xs font-medium text-[#737373] mb-3 uppercase tracking-wide">
+                Video
+              </label>
+              <div
+                onClick={() => fileInputRef.current?.click()}
+                onDragOver={handleDragOver}
+                onDragLeave={handleDragLeave}
+                onDrop={handleDrop}
+                className={`
+                  border border-dashed rounded-xl py-10 px-6 text-center cursor-pointer transition-all
+                  ${isDragOver
+                    ? "border-[#7c3aed] bg-[#7c3aed]/10"
+                    : file
+                      ? "border-[#22c55e] bg-[#22c55e]/5"
+                      : "border-[#333] hover:border-[#444] bg-[#0a0a0a]"
+                  }
+                `}
+              >
+                {file ? (
+                  <div className="text-[#22c55e] text-sm">✓ {file.name}</div>
+                ) : (
+                  <div className="text-[#666] text-sm">
+                    Drop video or <span className="text-[#7c3aed]">browse</span>
+                  </div>
+                )}
+              </div>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="video/*"
+                onChange={handleFileChange}
+                className="hidden"
+              />
+            </div>
+
+            {/* Personas */}
+            <div className="mb-6">
+              <label className="block text-xs font-medium text-[#737373] mb-3 uppercase tracking-wide">
+                Context (optional)
+              </label>
+              <textarea
+                value={personas}
+                onChange={(e) => setPersonas(e.target.value)}
+                placeholder="Describe characters or context..."
+                rows={4}
+                className="
+                  w-full bg-[#0a0a0a] border border-[#333] rounded-xl p-4
+                  text-sm text-white placeholder-[#444] resize-none
+                  focus:outline-none focus:border-[#444] transition-colors
+                "
+              />
+            </div>
+
+            {/* Submit */}
+            <button
+              type="submit"
+              disabled={!file || isSubmitting}
+              className="
+                w-full py-4 bg-[#7c3aed] rounded-xl text-sm font-medium text-white
+                hover:bg-[#6d28d9] transition-colors
+                disabled:opacity-40 disabled:cursor-not-allowed
+              "
+            >
+              {isSubmitting ? "Processing..." : "Generate"}
+            </button>
+
+            {/* Status */}
+            {status === "loading" && (
+              <div className="mt-6 p-4 rounded-xl bg-[#7c3aed]/10 border border-[#7c3aed]/20 text-[#a78bfa] text-sm text-center animate-pulse-slow">
+                Processing video...
+              </div>
+            )}
+
+            {status === "success" && result && (
+              <div className="mt-6 p-4 rounded-xl bg-[#22c55e]/10 border border-[#22c55e]/20 text-[#4ade80] text-sm">
+                <div className="font-medium">✓ {result.message}</div>
+                {result.story && (
+                  <p className="mt-3 text-[#888] whitespace-pre-wrap">{result.story}</p>
+                )}
+              </div>
+            )}
+
+            {status === "error" && result && (
+              <div className="mt-6 p-4 rounded-xl bg-[#ef4444]/10 border border-[#ef4444]/20 text-[#f87171] text-sm text-center">
+                {result.error}
+              </div>
+            )}
+          </form>
         </div>
-      </main>
-    </div>
+      </div>
+    </main>
   );
 }

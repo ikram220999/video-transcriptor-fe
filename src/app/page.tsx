@@ -375,8 +375,8 @@ export default function Home() {
               <textarea
                 value={personas}
                 onChange={(e) => setPersonas(e.target.value)}
-                placeholder="Add context about the video..."
-                rows={2}
+                placeholder={`Add one or more personas...\nExample:\nTom - a gray cat\nJerry - brown mouse`}
+                rows={3}
                 style={{
                   width: "100%",
                   background: "transparent",
@@ -387,6 +387,7 @@ export default function Home() {
                   color: "#e5e5e5",
                   resize: "none",
                   outline: "none",
+                  whiteSpace: "pre-line",
                 }}
                 onFocus={(e) => (e.target.style.borderColor = "#3f3f46")}
                 onBlur={(e) => (e.target.style.borderColor = "#27272a")}

@@ -1,14 +1,8 @@
 @import "tailwindcss";
 
 :root {
-  --bg: #0c0c0c;
-  --card: #161616;
-  --border: #262626;
-  --accent: #7c3aed;
-  --text: #fafafa;
-  --muted: #737373;
-  --success: #22c55e;
-  --error: #ef4444;
+  --background: #0a0a0a;
+  --foreground: #fafafa;
 }
 
 * {
@@ -17,17 +11,46 @@
   box-sizing: border-box;
 }
 
+html {
+  font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
 body {
-  background: var(--bg);
-  color: var(--text);
+  background: var(--background);
+  color: var(--foreground);
   min-height: 100vh;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+::selection {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 @keyframes pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.5; }
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
 }
 
-.animate-pulse-slow {
-  animation: pulse 1.5s ease-in-out infinite;
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(400%);
+  }
 }

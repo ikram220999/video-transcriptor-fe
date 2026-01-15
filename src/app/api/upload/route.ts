@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
+const BACKEND_URL = process.env.BACKEND_URL || "http://localhost:3001";
+
 export async function POST(request: NextRequest) {
   try {
     const formData = await request.formData();
@@ -21,38 +23,34 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Generate a mock job ID
-    const jobId = `job_${Date.now()}_${Math.random().toString(36).substring(7)}`;
+    // Create a new FormData to send to the backend
+    const backendFormData = new FormData();
+    backendFormData.append("video", video);
+    if (personas) {
+      backendFormData.append("personas", personas);
+    }
 
-    // Simulate processing (in production, you'd send this to your backend)
-    console.log(`Processing video: ${video.name}`);
-    console.log(`Personas: ${personas}`);
-    console.log(`Job ID: ${jobId}`);
-
-    // Mock response - replace this with actual API call to your backend
-    return NextResponse.json({
-      message: "Video uploaded successfully!",
-      jobId,
-      summary: {
-        scenesDetected: Math.floor(Math.random() * 10) + 5,
-        keyframesExtracted: Math.floor(Math.random() * 50) + 20,
-      },
-      story: personas
-        ? `Based on your personas and the uploaded video "${video.name}", here's a generated story preview...\n\nThis is where the AI-generated story would appear after processing is complete. The story would incorporate the characters and context you provided.`
-        : undefined,
+    // Forward the request to the backend
+    const response = await fetch(`${BACKEND_URL}/api/upload`, {
+      method: "POST",
+      body: backendFormData,
     });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      return NextResponse.json(
+        { error: data.error || "Backend processing failed" },
+        { status: response.status }
+      );
+    }
+
+    return NextResponse.json(data);
   } catch (error) {
     console.error("Upload error:", error);
     return NextResponse.json(
-      { error: "Failed to process upload" },
+      { error: "Failed to connect to backend server" },
       { status: 500 }
     );
   }
 }
-
-// Configure the API route to handle large files
-export const config = {
-  api: {
-    bodyParser: false,
-  },
-};

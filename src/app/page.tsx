@@ -124,50 +124,71 @@ export default function Home() {
       const reader = response.body.getReader();
       const decoder = new TextDecoder();
       let buffer = "";
+      let currentEventType = "";
+
+      const processLine = (line: string) => {
+        if (line.startsWith("event: ")) {
+          currentEventType = line.slice(7).trim();
+        } else if (line.startsWith("data: ")) {
+          const dataStr = line.slice(6);
+          try {
+            const data = JSON.parse(dataStr);
+
+            if (currentEventType === "progress") {
+              setCurrentStep(data.step);
+              setProgressSteps((prev) => {
+                const existing = prev.findIndex((p) => p.step === data.step);
+                if (existing >= 0) {
+                  const updated = [...prev];
+                  updated[existing] = data;
+                  return updated;
+                }
+                return [...prev, data];
+              });
+            } else if (currentEventType === "complete") {
+              setStatus("success");
+              setResult(data);
+              setIsSubmitting(false);
+            } else if (currentEventType === "error") {
+              setStatus("error");
+              setResult({ error: data.message });
+              setIsSubmitting(false);
+            }
+          } catch {
+            // Ignore parse errors
+          }
+        }
+      };
 
       while (true) {
         const { done, value } = await reader.read();
-        if (done) break;
+        
+        if (done) {
+          // Process any remaining data in buffer
+          if (buffer.trim()) {
+            const remainingLines = buffer.split("\n");
+            for (const line of remainingLines) {
+              if (line.trim()) {
+                processLine(line);
+              }
+            }
+          }
+          break;
+        }
 
         buffer += decoder.decode(value, { stream: true });
         const lines = buffer.split("\n");
         buffer = lines.pop() || "";
 
-        let eventType = "";
         for (const line of lines) {
-          if (line.startsWith("event: ")) {
-            eventType = line.slice(7).trim();
-          } else if (line.startsWith("data: ")) {
-            const dataStr = line.slice(6);
-            try {
-              const data = JSON.parse(dataStr);
-
-              if (eventType === "progress") {
-                setCurrentStep(data.step);
-                setProgressSteps((prev) => {
-                  const existing = prev.findIndex((p) => p.step === data.step);
-                  if (existing >= 0) {
-                    const updated = [...prev];
-                    updated[existing] = data;
-                    return updated;
-                  }
-                  return [...prev, data];
-                });
-              } else if (eventType === "complete") {
-                setStatus("success");
-                setResult(data);
-                setIsSubmitting(false);
-              } else if (eventType === "error") {
-                setStatus("error");
-                setResult({ error: data.message });
-                setIsSubmitting(false);
-              }
-            } catch {
-              // Ignore parse errors
-            }
+          if (line.trim()) {
+            processLine(line);
           }
         }
       }
+      
+      // Ensure we mark as not submitting if stream ended without complete/error event
+      setIsSubmitting(false);
     } catch (error) {
       setStatus("error");
       setResult({

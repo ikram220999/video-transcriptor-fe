@@ -216,35 +216,10 @@ export default function Home() {
   const hasActivity = status !== "idle";
 
   return (
-    <main
-      style={{
-        height: "100vh",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        padding: "2rem",
-        overflow: "hidden",
-      }}
-    >
-      <div
-        style={{
-          display: "flex",
-          gap: "2rem",
-          width: "100%",
-          maxWidth: "1000px",
-          height: "auto",
-          maxHeight: "calc(100vh - 4rem)",
-        }}
-      >
+    <main className="main-wrapper">
+      <div className="main-container">
         {/* Left Panel - Upload Form */}
-        <div
-          style={{
-            flex: hasActivity ? "0 0 380px" : "1",
-            maxWidth: hasActivity ? "380px" : "450px",
-            margin: hasActivity ? "0" : "0 auto",
-            transition: "all 0.3s ease",
-          }}
-        >
+        <div className={`left-panel ${hasActivity ? "has-activity" : "centered"}`}>
           {/* Header */}
           <header style={{ marginBottom: "1.5rem" }}>
             <h1
@@ -454,17 +429,7 @@ export default function Home() {
 
         {/* Right Panel - Progress / Results */}
         {hasActivity && (
-          <div
-            style={{
-              flex: 1,
-              minWidth: 0,
-              display: "flex",
-              flexDirection: "column",
-              border: "1px solid #27272a",
-              borderRadius: "0.5rem",
-              overflow: "hidden",
-            }}
-          >
+          <div className="right-panel">
             {/* Progress */}
             {status === "loading" && (
               <div style={{ padding: "1.25rem", height: "100%", display: "flex", flexDirection: "column" }}>

@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useRef, DragEvent, ChangeEvent, FormEvent } from "react";
-import ReactDiffViewer from 'react-diff-viewer';
 
 type StatusType = "idle" | "loading" | "success" | "error";
 
@@ -59,76 +58,6 @@ export default function Home() {
   const [rightPanelTab, setRightPanelTab] = useState<RightPanelTab>("progress");
 
   const MAX_FILE_SIZE = Number(process.env.NEXT_PUBLIC_MAX_FILE_SIZE || 30) * 1024 * 1024; // 30MB in bytes
-
-  const oldCode = `
-import type { Metadata } from "next";
-import { Sora } from "next/font/google";
-import "./globals.css";
-
-const sora = Sora({
-  variable: "--font-sora",
-  subsets: ["latin"],
-  weight: ["300", "400", "500", "600", "700"],
-});
-
-export const metadata: Metadata = {
-  title: "Video Story Generator",
-  description: "Upload a video and define personas for AI-powered story generation",
-};
-
-export default function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
-  return (
-    <html lang="en">
-        {children}
-      </body>
-    </html>
-  );
-}
-
-`;
-const newCode = `
-import type { Metadata } from "next";
-import { Sora } from "next/font/google";
-import "./globals.css";
-
-const sora = Sora({
-  variable: "--font-sora",
-  subsets: ["latin"],
-  weight: ["300", "400", "500", "600", "700"],
-});
-
-export const metadata: Metadata = {
-  title: "Video Story Generator",
-  description: "Upload a video and define personas for AI-powered story generation",
-  icons: {
-    icon: "/favicon.ico",
-  },
-  viewport: {
-    width: "device-width",
-    initialScale: 1,
-    maximumScale: 1,
-    userScalable: false,
-  },
-};
-
-export default function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
-  return (
-    <html lang="en">
-        {children}
-      </body>
-    </html>
-  );
-}
-
-`;
 
   const validateFile = (file: File): boolean => {
     if (file.size > MAX_FILE_SIZE) {
@@ -691,8 +620,6 @@ export default function RootLayout({
             </button>
           </form>
         </div>
-        <ReactDiffViewer oldValue={oldCode} newValue={newCode} splitView={true} useDarkTheme={true} />
-
 
         {/* Right Panel - Progress / Results */}
         {hasActivity && (
